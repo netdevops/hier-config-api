@@ -52,9 +52,7 @@ async def predict_config(request: PredictConfigRequest) -> PredictConfigResponse
         )
         return PredictConfigResponse(platform=request.platform, predicted_config=predicted_config)
     except Exception as e:
-        raise HTTPException(
-            status_code=400, detail=f"Failed to predict config: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=400, detail=f"Failed to predict config: {str(e)}") from e
 
 
 @router.post("/merge", response_model=MergeConfigResponse)

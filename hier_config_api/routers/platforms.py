@@ -19,9 +19,7 @@ async def list_platforms() -> list[PlatformInfo]:
     try:
         return PlatformService.list_platforms()
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to list platforms: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to list platforms: {str(e)}") from e
 
 
 @router.get("/{platform}/rules", response_model=PlatformRules)
@@ -42,6 +40,4 @@ async def validate_config(platform: str, request: ValidateConfigRequest) -> Vali
         result = PlatformService.validate_config(platform, request.config_text)
         return ValidateConfigResponse(**result)
     except Exception as e:
-        raise HTTPException(
-            status_code=400, detail=f"Failed to validate config: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=400, detail=f"Failed to validate config: {str(e)}") from e

@@ -68,9 +68,7 @@ class BatchJobStatus(BaseModel):
 
     job_id: str = Field(..., description="Job identifier")
     status: str = Field(..., description="Job status (pending, running, completed, failed)")
-    progress: float = Field(
-        0.0, description="Progress percentage (0.0 to 100.0)", ge=0.0, le=100.0
-    )
+    progress: float = Field(0.0, description="Progress percentage (0.0 to 100.0)", ge=0.0, le=100.0)
     total_devices: int = Field(..., description="Total number of devices")
     completed_devices: int = Field(0, description="Number of completed devices")
     failed_devices: int = Field(0, description="Number of failed devices")

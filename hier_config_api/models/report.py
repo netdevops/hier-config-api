@@ -1,6 +1,5 @@
 """Pydantic models for multi-device reporting."""
 
-
 from pydantic import BaseModel, Field
 
 

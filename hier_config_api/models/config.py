@@ -47,7 +47,9 @@ class PredictConfigResponse(BaseModel):
     """Response model for predicted configuration."""
 
     platform: str = Field(..., description="Platform type")
-    predicted_config: str = Field(..., description="Predicted configuration after applying commands")
+    predicted_config: str = Field(
+        ..., description="Predicted configuration after applying commands"
+    )
 
 
 class MergeConfigRequest(BaseModel):

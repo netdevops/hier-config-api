@@ -27,9 +27,7 @@ async def create_batch_remediation(request: BatchJobRequest) -> BatchJobResponse
 
         return BatchJobResponse(job_id=job_id, total_devices=job_data["total_devices"])
     except Exception as e:
-        raise HTTPException(
-            status_code=400, detail=f"Failed to create batch job: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=400, detail=f"Failed to create batch job: {str(e)}") from e
 
 
 @router.get("/jobs/{job_id}", response_model=BatchJobStatus)

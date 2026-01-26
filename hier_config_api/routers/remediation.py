@@ -55,9 +55,7 @@ async def apply_tags(remediation_id: str, request: ApplyTagsRequest) -> ApplyTag
 
     try:
         remediation_config = remediation_data["remediation_config"]
-        tagged_config, tags = RemediationService.apply_tags(
-            remediation_config, request.tag_rules
-        )
+        tagged_config, tags = RemediationService.apply_tags(remediation_config, request.tag_rules)
 
         # Update stored remediation
         storage.update_remediation(remediation_id, {"tags": tags})
