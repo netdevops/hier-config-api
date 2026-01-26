@@ -1,5 +1,10 @@
 # hier-config-api
 
+[![CI](https://github.com/netdevops/hier-config-api/workflows/CI/badge.svg)](https://github.com/netdevops/hier-config-api/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/netdevops/hier-config-api/branch/main/graph/badge.svg)](https://codecov.io/gh/netdevops/hier-config-api)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+
 REST API for [hier_config](https://github.com/netdevops/hier_config) network configuration management.
 
 ## Overview
