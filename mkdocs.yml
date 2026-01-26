@@ -1,0 +1,110 @@
+site_name: hier-config-api
+site_description: REST API for hier_config network configuration management
+site_author: hier-config-api
+site_url: https://netdevops.github.io/hier-config-api
+
+repo_name: netdevops/hier-config-api
+repo_url: https://github.com/netdevops/hier-config-api
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.tracking
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+      - Configuration: getting-started/configuration.md
+  - API Reference:
+      - Overview: api/overview.md
+      - Configuration Operations: api/configurations.md
+      - Remediation Workflows: api/remediation.md
+      - Multi-Device Reports: api/reports.md
+      - Platform Information: api/platforms.md
+      - Batch Operations: api/batch.md
+  - Guides:
+      - Development: guides/development.md
+      - Contributing: guides/contributing.md
+      - Deployment: guides/deployment.md
+  - Examples:
+      - Basic Usage: examples/basic.md
+      - Advanced Workflows: examples/advanced.md
+      - Python Client: examples/python-client.md
+  - Code Reference: reference/
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  - section-index
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            heading_level: 2
+            members_order: source
+  - gen-files:
+      scripts:
+        - docs/gen_ref_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/netdevops/hier-config-api
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/hier-config-api/
+  version:
+    provider: mike
+
+copyright: Copyright &copy; 2025 hier-config-api
