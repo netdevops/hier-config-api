@@ -295,15 +295,19 @@ name = "hier-config"
 version = "3.4.0"
 description = "A network configuration query and comparison library, used to build remediation configurations."
 optional = false
-python-versions = "<4.0,>=3.10.0"
+python-versions = ">=3.10.0,<4.0"
 groups = ["main"]
-files = [
-    {file = "hier_config-3.4.0-py3-none-any.whl", hash = "sha256:c26f374fc28983ca665c78039a62fd31b77a4bd906c75b4d5b068a36612aa6b1"},
-    {file = "hier_config-3.4.0.tar.gz", hash = "sha256:27f58074dd43141c5ca7c5b8d095c9e54bb18ca63536fcf31a6bc2dcde24ec36"},
-]
+files = []
+develop = false
 
 [package.dependencies]
-pydantic = ">=2.9,<3.0"
+pydantic = "^2.9"
+
+[package.source]
+type = "git"
+url = "https://github.com/netdevops/hier_config.git"
+reference = "HEAD"
+resolved_reference = "aa119e54d716e6aaedc9035d10e370a14e929ae9"
 
 [[package]]
 name = "httpcore"
@@ -1516,5 +1520,5 @@ files = [
 
 [metadata]
 lock-version = "2.1"
-python-versions = "^3.10"
-content-hash = "944e0f28133124fb5f41037c5eb4dc6e16d0f0388baeeb47f0f5a62ce6e8aeb3"
+python-versions = ">=3.10,<4.0"
+content-hash = "87346877624d129352559ad03a001e27ca0b3719a806c9613530d1e739945297"
