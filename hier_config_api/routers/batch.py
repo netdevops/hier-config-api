@@ -1,5 +1,7 @@
 """API router for batch operations."""
 
+import logging
+
 from fastapi import APIRouter, HTTPException
 
 from hier_config_api.models.platform import (
@@ -10,6 +12,8 @@ from hier_config_api.models.platform import (
 )
 from hier_config_api.services.platform_service import PlatformService
 from hier_config_api.utils.storage import storage
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/batch", tags=["batch"])
 
@@ -26,7 +30,7 @@ async def create_batch_remediation(request: BatchJobRequest) -> BatchJobResponse
         storage.update_job(job_id, job_data)
 
         return BatchJobResponse(job_id=job_id, total_devices=job_data["total_devices"])
-    except Exception as e:
+    except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=f"Failed to create batch job: {str(e)}") from e
 
 
@@ -37,17 +41,14 @@ async def get_batch_job_status(job_id: str) -> BatchJobStatus:
     if not job_data:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    try:
-        return BatchJobStatus(
-            job_id=job_id,
-            status=job_data["status"],
-            progress=job_data["progress"],
-            total_devices=job_data["total_devices"],
-            completed_devices=job_data["completed_devices"],
-            failed_devices=job_data["failed_devices"],
-        )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to get job status: {str(e)}") from e
+    return BatchJobStatus(
+        job_id=job_id,
+        status=job_data["status"],
+        progress=job_data["progress"],
+        total_devices=job_data["total_devices"],
+        completed_devices=job_data["completed_devices"],
+        failed_devices=job_data["failed_devices"],
+    )
 
 
 @router.get("/jobs/{job_id}/results", response_model=BatchJobResults)
@@ -60,19 +61,16 @@ async def get_batch_job_results(job_id: str) -> BatchJobResults:
     if job_data["status"] not in ["completed", "failed"]:
         raise HTTPException(status_code=400, detail="Job is not yet completed")
 
-    try:
-        summary = {
-            "total_devices": job_data["total_devices"],
-            "completed_devices": job_data["completed_devices"],
-            "failed_devices": job_data["failed_devices"],
-            "status": job_data["status"],
-        }
+    summary = {
+        "total_devices": job_data["total_devices"],
+        "completed_devices": job_data["completed_devices"],
+        "failed_devices": job_data["failed_devices"],
+        "status": job_data["status"],
+    }
 
-        return BatchJobResults(
-            job_id=job_id,
-            status=job_data["status"],
-            results=job_data["results"],
-            summary=summary,
-        )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to get job results: {str(e)}") from e
+    return BatchJobResults(
+        job_id=job_id,
+        status=job_data["status"],
+        results=job_data["results"],
+        summary=summary,
+    )

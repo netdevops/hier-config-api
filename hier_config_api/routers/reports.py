@@ -1,5 +1,7 @@
 """API router for multi-device reporting."""
 
+import logging
+
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import PlainTextResponse
 
@@ -12,6 +14,8 @@ from hier_config_api.models.report import (
 from hier_config_api.services.report_service import ReportService
 from hier_config_api.utils.storage import storage
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/v1/reports", tags=["reports"])
 
 
@@ -23,7 +27,7 @@ async def create_report(request: CreateReportRequest) -> CreateReportResponse:
         report_id = storage.store_report(report_data)
 
         return CreateReportResponse(report_id=report_id, total_devices=report_data["total_devices"])
-    except Exception as e:
+    except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=f"Failed to create report: {str(e)}") from e
 
 
@@ -34,12 +38,7 @@ async def get_report_summary(report_id: str) -> ReportSummary:
     if not report_data:
         raise HTTPException(status_code=404, detail="Report not found")
 
-    try:
-        return ReportService.get_summary(report_data)
-    except Exception as e:
-        raise HTTPException(
-            status_code=400, detail=f"Failed to get report summary: {str(e)}"
-        ) from e
+    return ReportService.get_summary(report_data)
 
 
 @router.get("/{report_id}/changes", response_model=GetReportChangesResponse)
@@ -57,7 +56,7 @@ async def get_report_changes(
         return GetReportChangesResponse(
             report_id=report_id, changes=changes, total_unique_changes=len(changes)
         )
-    except Exception as e:
+    except (ValueError, KeyError) as e:
         raise HTTPException(
             status_code=400, detail=f"Failed to get report changes: {str(e)}"
         ) from e
@@ -75,5 +74,5 @@ async def export_report(report_id: str, format: str = Query("json")) -> str:
 
     try:
         return ReportService.export_report(report_data, format_type=format)
-    except Exception as e:
+    except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=f"Failed to export report: {str(e)}") from e
