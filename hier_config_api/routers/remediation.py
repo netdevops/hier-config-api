@@ -1,5 +1,7 @@
 """API router for remediation operations."""
 
+import logging
+
 from fastapi import APIRouter, HTTPException, Query
 
 from hier_config_api.models.remediation import (
@@ -11,6 +13,8 @@ from hier_config_api.models.remediation import (
 )
 from hier_config_api.services.remediation_service import RemediationService
 from hier_config_api.utils.storage import storage
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/remediation", tags=["remediation"])
 
@@ -40,7 +44,7 @@ async def generate_remediation(request: GenerateRemediationRequest) -> GenerateR
             summary=result["summary"],
             tags=result["tags"],
         )
-    except Exception as e:
+    except (ValueError, KeyError) as e:
         raise HTTPException(
             status_code=400, detail=f"Failed to generate remediation: {str(e)}"
         ) from e
@@ -63,7 +67,7 @@ async def apply_tags(remediation_id: str, request: ApplyTagsRequest) -> ApplyTag
         return ApplyTagsResponse(
             remediation_id=remediation_id, remediation_config=tagged_config, tags=tags
         )
-    except Exception as e:
+    except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=f"Failed to apply tags: {str(e)}") from e
 
 
@@ -89,7 +93,7 @@ async def filter_remediation(
         return FilterRemediationResponse(
             remediation_id=remediation_id, filtered_config=filtered_config, summary=summary
         )
-    except Exception as e:
+    except (ValueError, KeyError) as e:
         raise HTTPException(
             status_code=400, detail=f"Failed to filter remediation: {str(e)}"
         ) from e

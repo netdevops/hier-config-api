@@ -1,5 +1,7 @@
 """API router for configuration operations."""
 
+import logging
+
 from fastapi import APIRouter, HTTPException
 
 from hier_config_api.models.config import (
@@ -16,6 +18,8 @@ from hier_config_api.models.config import (
 )
 from hier_config_api.services.config_service import ConfigService
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/v1/configs", tags=["configurations"])
 
 
@@ -25,7 +29,7 @@ async def parse_config(request: ParseConfigRequest) -> ParseConfigResponse:
     try:
         structured_config = ConfigService.parse_config(request.platform, request.config_text)
         return ParseConfigResponse(platform=request.platform, structured_config=structured_config)
-    except Exception as e:
+    except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=f"Failed to parse config: {str(e)}") from e
 
 
@@ -39,7 +43,7 @@ async def compare_configs(request: CompareConfigRequest) -> CompareConfigRespons
         return CompareConfigResponse(
             platform=request.platform, unified_diff=unified_diff, has_changes=has_changes
         )
-    except Exception as e:
+    except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=f"Failed to compare configs: {str(e)}") from e
 
 
@@ -51,7 +55,7 @@ async def predict_config(request: PredictConfigRequest) -> PredictConfigResponse
             request.platform, request.current_config, request.commands_to_apply
         )
         return PredictConfigResponse(platform=request.platform, predicted_config=predicted_config)
-    except Exception as e:
+    except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=f"Failed to predict config: {str(e)}") from e
 
 
@@ -61,7 +65,7 @@ async def merge_configs(request: MergeConfigRequest) -> MergeConfigResponse:
     try:
         merged_config = ConfigService.merge_configs(request.platform, request.configs)
         return MergeConfigResponse(platform=request.platform, merged_config=merged_config)
-    except Exception as e:
+    except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=f"Failed to merge configs: {str(e)}") from e
 
 
@@ -80,5 +84,5 @@ async def search_config(request: SearchConfigRequest) -> SearchConfigResponse:
         return SearchConfigResponse(
             platform=request.platform, matches=matches, match_count=len(matches)
         )
-    except Exception as e:
+    except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=f"Failed to search config: {str(e)}") from e
