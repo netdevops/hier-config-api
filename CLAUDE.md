@@ -8,31 +8,35 @@ hier-config-api is a FastAPI REST API providing an interface to the [hier_config
 
 ## Commands
 
+All commands use **poetry** (not pip):
+
 ```bash
 # Install dependencies
-poetry install              # production deps
-poetry install --with dev   # include dev deps
+poetry install
 
 # Run development server (with hot reload)
 poetry run uvicorn hier_config_api.main:app --reload
 
-# Linting & formatting
-poetry run ruff check .             # lint
-poetry run ruff check . --fix       # lint with auto-fix
-poetry run ruff format .            # format
-poetry run ruff format --check .    # check formatting
+# Full lint + test suite (equivalent to CI)
+poetry run python scripts/build.py lint-and-test
 
-# Type checking
-poetry run mypy hier_config_api
+# Lint only (ruff format + check, mypy, pyright, pylint, yamllint, flynt — run in parallel)
+poetry run python scripts/build.py lint
 
-# Tests
-poetry run pytest                                   # all tests (includes coverage)
+# Lint with auto-fixes (ruff --fix, ruff format, flynt)
+poetry run python scripts/build.py lint --fix
+
+# Tests with coverage (95% coverage required)
+poetry run python scripts/build.py pytest --coverage
+
+# Tests without coverage
+poetry run pytest                                   # all tests
 poetry run pytest tests/test_configs.py -v          # single test file
 poetry run pytest tests/test_configs.py::test_parse_config -v  # single test
 
 # Documentation
-poetry run mkdocs serve    # local preview with live reload
-poetry run mkdocs build    # build static site
+poetry run mkdocs serve            # local preview with live reload
+poetry run mkdocs build --strict   # build static site (CI runs this)
 ```
 
 ## Architecture
@@ -54,13 +58,20 @@ poetry run mkdocs build    # build static site
 
 ## Code Quality
 
-- **Ruff**: linter and formatter, line length 100, target Python 3.10
-- **MyPy**: strict mode enabled; `hier_config.*` has `ignore_missing_imports`
-- **Pytest**: asyncio_mode="auto", coverage configured via `--cov=hier_config_api`
+This repo follows the hier_config lint/typing/testing standards, enforced by
+`scripts/build.py` and CI:
+
+- **Ruff**: `select = ["ALL"]` with preview rules, line length 88, target Python 3.10; formatting via `ruff format` with `docstring-code-format`
+- **MyPy**: `strict = true` with the pydantic plugin
+- **Pyright**: `typeCheckingMode = "strict"`
+- **Pylint**: extension plugins + `pylint_pydantic`; rules already covered by ruff are disabled
+- **yamllint / flynt**: YAML style (2-space indent, no document-start) and f-string enforcement
+- **Pytest**: flat function-based tests with full type annotations; 95% coverage floor (`--cov=hier_config_api --cov-fail-under=95`)
 - Tests use `FastAPI.TestClient` with fixtures in `tests/conftest.py`
+- Never loosen lint or coverage configuration to make a change pass; do not add unjustified `# noqa` / `# type: ignore` suppressions
 
 ## CI
 
-GitHub Actions runs on push/PR to `main`/`develop`:
-- **Lint job**: ruff check, ruff format --check, mypy
-- **Test job**: pytest across Python 3.10, 3.11, 3.12
+GitHub Actions runs on push/PR to `develop`/`next`:
+- **build job** (Python 3.10–3.14 matrix): `poetry run python scripts/build.py lint` then `poetry run python scripts/build.py pytest --coverage`
+- **docs job**: `poetry run mkdocs build --strict`; deploys to GitHub Pages on push to `develop`
