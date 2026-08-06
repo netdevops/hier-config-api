@@ -1,0 +1,29 @@
+name: Release
+
+# Fires when a release is published, including a draft release being
+# published (the `created` type never fires for drafts).
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    # On release events, checkout defaults to the release's tag ref.
+    - uses: actions/checkout@v6
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: "3.13"
+    - name: Install poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 2.3.1
+    - name: Publish to PyPI
+      run: |
+        poetry config pypi-token.pypi "${{ secrets.PYPI_TOKEN }}"
+        poetry publish --build
