@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from hier_config import Platform, WorkflowRemediation, get_hconfig
+from hier_config import HConfig, Platform, WorkflowRemediation
 
 from hier_config_api.models.platform import PlatformInfo, PlatformRules
 
@@ -86,7 +86,7 @@ class PlatformService:
         try:
             # Try to parse the configuration
             platform_enum = PlatformService._get_platform(platform)
-            get_hconfig(platform_enum, config_text)
+            HConfig.from_text(platform_enum, config_text)
 
             # Basic validation checks
             if not config_text.strip():
@@ -138,8 +138,8 @@ class PlatformService:
                 intended_config = device_config.get("intended_config", "")
 
                 platform_enum = PlatformService._get_platform(platform)
-                running_hconfig = get_hconfig(platform_enum, running_config)
-                intended_hconfig = get_hconfig(platform_enum, intended_config)
+                running_hconfig = HConfig.from_text(platform_enum, running_config)
+                intended_hconfig = HConfig.from_text(platform_enum, intended_config)
 
                 workflow = WorkflowRemediation(running_hconfig, intended_hconfig)
                 remediation = workflow.remediation_config

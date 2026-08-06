@@ -3,7 +3,7 @@
 import re
 from typing import Any
 
-from hier_config import Platform, WorkflowRemediation, get_hconfig
+from hier_config import HConfig, Platform, WorkflowRemediation
 
 
 class ConfigService:
@@ -26,7 +26,7 @@ class ConfigService:
     def parse_config(platform: str, config_text: str) -> dict[str, Any]:
         """Parse configuration text into structured format."""
         platform_enum = ConfigService._get_platform(platform)
-        hconfig = get_hconfig(platform_enum, config_text)
+        hconfig = HConfig.from_text(platform_enum, config_text)
 
         # Convert HConfig tree to dictionary representation
         def config_to_dict(config_obj: Any) -> dict[str, Any]:
@@ -47,8 +47,8 @@ class ConfigService:
     ) -> tuple[str, bool]:
         """Compare two configurations and return unified diff."""
         platform_enum = ConfigService._get_platform(platform)
-        running_hconfig = get_hconfig(platform_enum, running_config)
-        intended_hconfig = get_hconfig(platform_enum, intended_config)
+        running_hconfig = HConfig.from_text(platform_enum, running_config)
+        intended_hconfig = HConfig.from_text(platform_enum, intended_config)
 
         workflow = WorkflowRemediation(running_hconfig, intended_hconfig)
         remediation = workflow.remediation_config
@@ -100,8 +100,8 @@ class ConfigService:
 
         # Merge each subsequent config
         for config in configs[1:]:
-            running_hconfig = get_hconfig(platform_enum, merged)
-            intended_hconfig = get_hconfig(platform_enum, config)
+            running_hconfig = HConfig.from_text(platform_enum, merged)
+            intended_hconfig = HConfig.from_text(platform_enum, config)
 
             workflow = WorkflowRemediation(running_hconfig, intended_hconfig)
             remediation = workflow.remediation_config
@@ -121,7 +121,7 @@ class ConfigService:
     ) -> list[str]:
         """Search configuration for matching lines."""
         platform_enum = ConfigService._get_platform(platform)
-        hconfig = get_hconfig(platform_enum, config_text)
+        hconfig = HConfig.from_text(platform_enum, config_text)
 
         matches = []
 

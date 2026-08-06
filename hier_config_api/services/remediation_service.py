@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from hier_config import Platform, WorkflowRemediation, get_hconfig
+from hier_config import HConfig, Platform, WorkflowRemediation
 
 from hier_config_api.models.remediation import RemediationSummary, TagRule
 
@@ -34,8 +34,8 @@ class RemediationService:
     ) -> dict[str, Any]:
         """Generate remediation and rollback configurations."""
         platform_enum = RemediationService._get_platform(platform)
-        running_hconfig = get_hconfig(platform_enum, running_config)
-        intended_hconfig = get_hconfig(platform_enum, intended_config)
+        running_hconfig = HConfig.from_text(platform_enum, running_config)
+        intended_hconfig = HConfig.from_text(platform_enum, intended_config)
 
         # Load tag rules if provided
         if tag_rules:

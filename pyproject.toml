@@ -12,7 +12,7 @@ dependencies = [
     "uvicorn[standard] (>=0.40.0,<0.41.0)",
     "pydantic (>=2.12.5,<3.0.0)",
     "pydantic-settings (>=2.12.0,<3.0.0)",
-    "hier-config @ git+https://github.com/netdevops/hier_config.git"
+    "hier-config (>=4.0.0b1,<5.0.0)"
 ]
 
 
