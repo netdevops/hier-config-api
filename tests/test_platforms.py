@@ -7,7 +7,7 @@ def test_list_platforms(client: TestClient) -> None:
     """Test listing all platforms."""
     response = client.get("/api/v1/platforms")
     assert response.status_code == 200
-    data = response.json()
+    data: list[dict[str, str]] = response.json()
     assert isinstance(data, list)
     assert len(data) > 0
     # Check that cisco_ios is in the list
@@ -28,7 +28,8 @@ def test_get_platform_rules(client: TestClient) -> None:
 def test_validate_config(client: TestClient, sample_cisco_ios_config: str) -> None:
     """Test validating configuration."""
     response = client.post(
-        "/api/v1/platforms/cisco_ios/validate", json={"config_text": sample_cisco_ios_config}
+        "/api/v1/platforms/cisco_ios/validate",
+        json={"config_text": sample_cisco_ios_config},
     )
     assert response.status_code == 200
     data = response.json()
@@ -40,7 +41,9 @@ def test_validate_config(client: TestClient, sample_cisco_ios_config: str) -> No
 
 def test_validate_empty_config(client: TestClient) -> None:
     """Test validating empty configuration."""
-    response = client.post("/api/v1/platforms/cisco_ios/validate", json={"config_text": ""})
+    response = client.post(
+        "/api/v1/platforms/cisco_ios/validate", json={"config_text": ""}
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["platform"] == "cisco_ios"
@@ -49,7 +52,9 @@ def test_validate_empty_config(client: TestClient) -> None:
 
 
 def test_create_batch_job(
-    client: TestClient, sample_cisco_ios_config: str, sample_cisco_ios_intended_config: str
+    client: TestClient,
+    sample_cisco_ios_config: str,
+    sample_cisco_ios_intended_config: str,
 ) -> None:
     """Test creating a batch remediation job."""
     response = client.post(
@@ -78,7 +83,9 @@ def test_create_batch_job(
 
 
 def test_get_batch_job_status(
-    client: TestClient, sample_cisco_ios_config: str, sample_cisco_ios_intended_config: str
+    client: TestClient,
+    sample_cisco_ios_config: str,
+    sample_cisco_ios_intended_config: str,
 ) -> None:
     """Test getting batch job status."""
     # First, create a batch job
@@ -108,7 +115,9 @@ def test_get_batch_job_status(
 
 
 def test_get_batch_job_results(
-    client: TestClient, sample_cisco_ios_config: str, sample_cisco_ios_intended_config: str
+    client: TestClient,
+    sample_cisco_ios_config: str,
+    sample_cisco_ios_intended_config: str,
 ) -> None:
     """Test getting batch job results."""
     # First, create a batch job
