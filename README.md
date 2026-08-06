@@ -280,6 +280,21 @@ poetry run pytest tests/test_configs.py::test_parse_config -v
 
 Never loosen the lint or coverage configuration to make a change pass.
 
+### Releasing
+
+Releases are driven by two GitHub Actions workflows and require repository
+admin permission:
+
+1. Run the **Prepare Release** workflow (`Actions` → `Prepare Release` →
+   `Run workflow`), choosing the branch to release from in the branch
+   dropdown and the version bump type (`major`, `minor`, `patch`, or
+   `prerelease`). The workflow bumps the version in `pyproject.toml`, opens
+   a `release/vX.Y.Z` pull request against the chosen branch, and creates a
+   draft GitHub release tagged `vX.Y.Z` targeting that branch.
+2. Merge the release pull request.
+3. Publish the draft release. Publishing fires the **Release** workflow,
+   which builds the package and uploads it to PyPI automatically.
+
 ## Supported Platforms
 
 - Cisco IOS (`cisco_ios`)
