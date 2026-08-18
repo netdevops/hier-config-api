@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import os
-import subprocess  # noqa: S404
+import subprocess  # ruff:ignore[suspicious-subprocess-import]
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import cache
@@ -83,12 +83,14 @@ def _ruff_check_command(*, fix: bool, unsafe_fixes: bool, statistics: bool) -> s
 @app.command()
 def pytest(
     *,
+    profile: bool = False,
     coverage: bool = True,
     threaded: bool = False,
 ) -> None:
     """Run pytest unittests."""
     _run(
         _pytest_command(
+            profile=profile,
             coverage=coverage,
             threaded=threaded,
         ),
@@ -98,10 +100,13 @@ def pytest(
 
 def _pytest_command(
     *,
+    profile: bool = False,
     coverage: bool = True,
     threaded: bool = False,
 ) -> str:
     command = "pytest"
+    if profile:
+        command += " --profile --profile-svg"
     if coverage:
         command += (
             " --cov=hier_config_api --cov-fail-under=95 --cov-report=term-missing"
@@ -204,17 +209,17 @@ def _run_commands_threaded(commands: tuple[str, ...]) -> NoReturn:
         ):
             command, return_code, output = future.result()
             if return_code:
-                print(output)  # noqa: T201
+                print(output)  # ruff:ignore[print]
             return_codes[command] = return_code
 
     error_found = False
     for command, return_code in return_codes.items():
         if return_code != 0:
-            print(f"{command.split()[0]} -> {return_code}")  # noqa: T201
+            print(f"{command.split()[0]} -> {return_code}")  # ruff:ignore[print]
             error_found = True
     if error_found:
         sys.exit(1)
-    print("No issues found")  # noqa: T201
+    print("No issues found")  # ruff:ignore[print]
     sys.exit()
 
 
@@ -224,19 +229,19 @@ def _run(
     check: bool = True,
     environment: dict[str, str] | None = None,
 ) -> int:
-    print(f"\n======== {command} ========\n")  # noqa: T201
+    print(f"\n======== {command} ========\n")  # ruff:ignore[print]
     my_env = os.environ.copy()
     if environment:
         my_env.update(environment)
-    result = subprocess.run(command.split(), check=False, env=my_env)  # noqa: S603
+    result = subprocess.run(command.split(), check=False, env=my_env)  # ruff:ignore[subprocess-without-shell-equals-true]
     if check:
         sys.exit(result.returncode)
     return result.returncode
 
 
 def _run_for_thread(command: str) -> tuple[str, int, str]:
-    print(f"Running: {command}")  # noqa: T201
-    result = subprocess.run(  # noqa: S603
+    print(f"Running: {command}")  # ruff:ignore[print]
+    result = subprocess.run(  # ruff:ignore[subprocess-without-shell-equals-true]
         command.split(),
         check=False,
         capture_output=True,

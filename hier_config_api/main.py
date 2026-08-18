@@ -52,4 +52,4 @@ if __name__ == "__main__":
 
     # Dev/container entry point: binding all interfaces is intentional so the
     # API is reachable from outside the container.
-    uvicorn.run(app, host="0.0.0.0", port=8000)  # noqa: S104
+    uvicorn.run(app, host="0.0.0.0", port=8000)  # ruff: ignore[hardcoded-bind-all-interfaces]

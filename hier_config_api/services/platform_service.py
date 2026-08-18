@@ -89,7 +89,7 @@ class PlatformService:
             HConfig.from_text(platform_enum, config_text)
         # A validation endpoint must convert any parsing failure into a
         # validation error rather than propagate it as a server error.
-        except Exception as exc:  # noqa: BLE001  # pylint: disable=broad-exception-caught
+        except Exception as exc:  # ruff: ignore[blind-except]  # pylint: disable=broad-exception-caught
             errors.append(f"Configuration parsing error: {exc!s}")
             is_valid = False
         else:
@@ -152,7 +152,7 @@ class PlatformService:
             result = PlatformService._remediate_device(device_config)
         # Batch jobs record per-device failures instead of aborting the job,
         # so any processing error must be captured here.
-        except Exception as exc:  # noqa: BLE001  # pylint: disable=broad-exception-caught
+        except Exception as exc:  # ruff: ignore[blind-except]  # pylint: disable=broad-exception-caught
             return (
                 {
                     "device_id": device_config.get("device_id"),

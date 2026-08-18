@@ -256,6 +256,29 @@ poetry run python scripts/build.py lint --fix
 poetry run python scripts/build.py pytest --coverage
 ```
 
+### Docker Development Environment
+
+A Docker-based development environment, driven by
+[invoke](https://www.pyinvoke.org/) tasks, is available as an alternative to a
+local Poetry setup:
+
+```bash
+invoke build             # build the development image
+invoke serve             # API with hot reload at http://localhost:8000
+invoke docs              # docs with live reload at http://localhost:8001
+invoke pytest            # tests inside the container (--coverage for the gate)
+invoke lint              # linters inside the container (--fix for auto-fixes)
+invoke lint-and-test     # full suite, same as CI
+invoke cli               # shell inside the container
+invoke sync-standards    # check drift against canonical netdevops standards
+invoke destroy           # tear down containers
+```
+
+Shared development standards (lint/typing/test tooling, YAML style) are owned
+by [hier_config](https://github.com/netdevops/hier_config) and declared in
+`.standards.yml`; `invoke sync-standards --apply` pulls in the canonical
+versions, and a weekly workflow opens a PR when they change.
+
 ### Running Tests
 
 ```bash

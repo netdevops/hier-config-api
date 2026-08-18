@@ -1,0 +1,24 @@
+services:
+  api:
+    build:
+      context: .
+      target: development
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    command: >
+      uvicorn hier_config_api.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Live-reloading documentation server; opt in with: docker compose --profile docs up
+  docs:
+    build:
+      context: .
+      target: development
+    profiles:
+      - docs
+    ports:
+      - "8001:8001"
+    volumes:
+      - .:/app
+    command: mkdocs serve --dev-addr 0.0.0.0:8001

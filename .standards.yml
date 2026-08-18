@@ -1,0 +1,20 @@
+# Shared development standards for netdevops hier-config projects.
+#
+# The files listed below are owned by the canonical repository and kept in
+# sync across all hier-config projects. Use `invoke sync-standards` (or
+# `poetry run python scripts/sync_standards.py check|apply`) to compare the
+# local copies against the canonical versions and pull in upstream changes.
+source:
+  repo: netdevops/hier_config
+  ref: master
+
+# Whole-word replacements applied to fetched file contents so package
+# references match this project.
+substitutions:
+  hier_config: hier_config_api
+
+files:
+  - scripts/build.py
+  - scripts/sync_standards.py
+  - .yamllint.yml
+  - .dockerignore
