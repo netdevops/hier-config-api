@@ -1,6 +1,6 @@
 [project]
 name = "hier-config-api"
-version = "0.1.0"
+version = "0.1.1a0"
 description = "REST API for hier_config network configuration management"
 authors = [
     {name = "hier-config-api",email = "james.williams@jtdub.com"}
