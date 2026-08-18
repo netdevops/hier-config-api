@@ -1,8 +1,8 @@
 """Service layer for platform information and batch operations."""
 
-from typing import Any
+from typing import Any, ClassVar
 
-from hier_config import Platform, WorkflowRemediation, get_hconfig
+from hier_config import HConfig, Platform, WorkflowRemediation
 
 from hier_config_api.models.platform import PlatformInfo, PlatformRules
 
@@ -11,7 +11,7 @@ class PlatformService:
     """Service for handling platform-related operations."""
 
     # Common platform definitions
-    PLATFORMS = {
+    PLATFORMS: ClassVar[dict[str, PlatformInfo]] = {
         "cisco_ios": PlatformInfo(
             platform_name="cisco_ios",
             display_name="Cisco IOS",
@@ -79,29 +79,29 @@ class PlatformService:
     @staticmethod
     def validate_config(platform: str, config_text: str) -> dict[str, Any]:
         """Validate configuration for a platform."""
-        warnings = []
-        errors = []
+        warnings: list[str] = []
+        errors: list[str] = []
         is_valid = True
 
+        platform_enum = PlatformService._get_platform(platform)
         try:
             # Try to parse the configuration
-            platform_enum = PlatformService._get_platform(platform)
-            get_hconfig(platform_enum, config_text)
-
+            HConfig.from_text(platform_enum, config_text)
+        # A validation endpoint must convert any parsing failure into a
+        # validation error rather than propagate it as a server error.
+        except Exception as exc:  # ruff: ignore[blind-except]  # pylint: disable=broad-exception-caught
+            errors.append(f"Configuration parsing error: {exc!s}")
+            is_valid = False
+        else:
             # Basic validation checks
             if not config_text.strip():
                 warnings.append("Configuration is empty")
                 is_valid = False
 
             # Platform-specific validation could be added here
-            if platform == "cisco_ios":
-                # Check for common Cisco IOS patterns
-                if "hostname" not in config_text:
-                    warnings.append("No hostname configured")
-
-        except Exception as e:
-            errors.append(f"Configuration parsing error: {str(e)}")
-            is_valid = False
+            # Check for common Cisco IOS patterns
+            if platform == "cisco_ios" and "hostname" not in config_text:
+                warnings.append("No hostname configured")
 
         return {
             "platform": platform,
@@ -124,45 +124,58 @@ class PlatformService:
         }
 
     @staticmethod
+    def _remediate_device(device_config: dict[str, Any]) -> dict[str, Any]:
+        """Generate remediation and rollback for a single batch device."""
+        platform = device_config.get("platform", "cisco_ios")
+        running_config = device_config.get("running_config", "")
+        intended_config = device_config.get("intended_config", "")
+
+        platform_enum = PlatformService._get_platform(platform)
+        running_hconfig = HConfig.from_text(platform_enum, running_config)
+        intended_hconfig = HConfig.from_text(platform_enum, intended_config)
+
+        workflow = WorkflowRemediation(running_hconfig, intended_hconfig)
+        remediation = workflow.remediation_config
+        rollback = workflow.rollback_config
+
+        return {
+            "device_id": device_config.get("device_id"),
+            "status": "success",
+            "remediation": str(remediation) if remediation else "",
+            "rollback": str(rollback) if rollback else "",
+        }
+
+    @staticmethod
+    def _process_device(device_config: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+        """Process one batch device, returning its result and success flag."""
+        try:
+            result = PlatformService._remediate_device(device_config)
+        # Batch jobs record per-device failures instead of aborting the job,
+        # so any processing error must be captured here.
+        except Exception as exc:  # ruff: ignore[blind-except]  # pylint: disable=broad-exception-caught
+            return (
+                {
+                    "device_id": device_config.get("device_id"),
+                    "status": "failed",
+                    "error": str(exc),
+                },
+                False,
+            )
+        return result, True
+
+    @staticmethod
     def process_batch_job(job_data: dict[str, Any]) -> dict[str, Any]:
         """Process a batch job (simplified synchronous version)."""
-        results = []
+        results: list[dict[str, Any]] = []
         completed = 0
         failed = 0
 
         for device_config in job_data["device_configs"]:
-            try:
-                # Process each device
-                platform = device_config.get("platform", "cisco_ios")
-                running_config = device_config.get("running_config", "")
-                intended_config = device_config.get("intended_config", "")
-
-                platform_enum = PlatformService._get_platform(platform)
-                running_hconfig = get_hconfig(platform_enum, running_config)
-                intended_hconfig = get_hconfig(platform_enum, intended_config)
-
-                workflow = WorkflowRemediation(running_hconfig, intended_hconfig)
-                remediation = workflow.remediation_config
-                rollback = workflow.rollback_config
-
-                results.append(
-                    {
-                        "device_id": device_config.get("device_id"),
-                        "status": "success",
-                        "remediation": str(remediation) if remediation else "",
-                        "rollback": str(rollback) if rollback else "",
-                    }
-                )
+            result, succeeded = PlatformService._process_device(device_config)
+            results.append(result)
+            if succeeded:
                 completed += 1
-
-            except Exception as e:
-                results.append(
-                    {
-                        "device_id": device_config.get("device_id"),
-                        "status": "failed",
-                        "error": str(e),
-                    }
-                )
+            else:
                 failed += 1
 
         # Update job data

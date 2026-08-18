@@ -16,7 +16,9 @@ def test_parse_config(client: TestClient, sample_cisco_ios_config: str) -> None:
 
 
 def test_compare_configs(
-    client: TestClient, sample_cisco_ios_config: str, sample_cisco_ios_intended_config: str
+    client: TestClient,
+    sample_cisco_ios_config: str,
+    sample_cisco_ios_intended_config: str,
 ) -> None:
     """Test comparing configurations."""
     response = client.post(

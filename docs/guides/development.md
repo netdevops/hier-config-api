@@ -24,6 +24,69 @@ poetry install
 poetry shell
 ```
 
+### Docker
+
+As an alternative to a local Poetry environment, the repository ships a Docker
+development environment driven by [invoke](https://www.pyinvoke.org/) tasks
+(`tasks.py`). The `development` image target installs the full toolchain, and
+`docker-compose.yml` bind-mounts the repository so the API server hot-reloads
+on changes:
+
+```bash
+# Build the development image (rerun after dependency changes)
+invoke build
+
+# Start the API with hot reload at http://localhost:8000
+invoke serve
+
+# Serve the documentation with live reload at http://localhost:8001
+invoke docs
+
+# Run tests and linters inside the container
+invoke pytest            # add --coverage for the 95% coverage gate
+invoke lint              # add --fix to apply auto-fixes
+invoke lint-and-test     # full suite, same as CI
+
+# Open a shell inside the container
+invoke cli
+
+# Tear everything down
+invoke destroy
+```
+
+The raw `docker compose` commands work as well; the invoke tasks are thin
+wrappers around them.
+
+## Common Development Standards
+
+All netdevops hier-config projects share a common development model: the same
+lint/typing/test tooling, YAML style, Docker development environment, and
+invoke task names.
+
+The canonical copies live in
+[netdevops/hier_config](https://github.com/netdevops/hier_config) — see its
+[Shared Development Standards](https://netdevops.github.io/hier_config/dev/shared-standards/)
+guide for the full model. This repository declares what it pulls in via the
+`.standards.yml` manifest: `scripts/build.py`, `scripts/sync_standards.py`,
+`.yamllint.yml`, and `.dockerignore`. Package references are rewritten
+(`hier_config` → `hier_config_api`) as files are fetched.
+
+Do not edit those files directly — the next sync overwrites them. Change them
+in `hier_config` instead. To compare the local copies against the canonical
+versions:
+
+```bash
+# Report drift (exits non-zero when local files differ from canonical)
+invoke sync-standards
+
+# Pull the canonical versions into the local files
+invoke sync-standards --apply
+```
+
+A scheduled GitHub Actions workflow (`sync-standards.yml`) runs the sync
+weekly and opens a pull request when the canonical standards change, so CI
+validates the update before it merges.
+
 ## Project Structure
 
 ```

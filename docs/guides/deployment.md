@@ -76,38 +76,15 @@ sudo certbot --nginx -d api.example.com
 
 ### Dockerfile
 
-Create `Dockerfile`:
-
-```dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-
-# Install Poetry
-RUN pip install poetry==2.3.1
-
-# Copy dependency files
-COPY pyproject.toml poetry.lock ./
-
-# Install dependencies
-RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi --no-root --only main
-
-# Copy application
-COPY hier_config_api ./hier_config_api
-
-# Expose port
-EXPOSE 8000
-
-# Run application
-CMD ["uvicorn", "hier_config_api.main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
+The repository ships a multi-stage `Dockerfile`. The `production` target
+installs only runtime dependencies; the `development` target (used by
+`docker-compose.yml` for local development) adds the full toolchain.
 
 ### Build and Run
 
 ```bash
-# Build image
-docker build -t hier-config-api:latest .
+# Build the production image
+docker build --target production -t hier-config-api:latest .
 
 # Run container
 docker run -d \
@@ -118,26 +95,26 @@ docker run -d \
 
 ### Docker Compose
 
-Create `docker-compose.yml`:
+The `docker-compose.yml` in the repository is tuned for development (hot
+reload, bind-mounted source). For a production deployment, use a compose file
+that targets the production image:
 
 ```yaml
-version: '3.8'
-
 services:
   api:
-    build: .
+    build:
+      context: .
+      target: production
     ports:
       - "8000:8000"
     restart: always
-    environment:
-      - LOG_LEVEL=info
     command: uvicorn hier_config_api.main:app --host 0.0.0.0 --port 8000 --workers 4
 ```
 
 Run:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ## Kubernetes Deployment

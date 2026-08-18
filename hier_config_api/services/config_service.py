@@ -3,7 +3,20 @@
 import re
 from typing import Any
 
-from hier_config import Platform, WorkflowRemediation, get_hconfig
+from hier_config import HConfig, HConfigChild, Platform, WorkflowRemediation
+
+from hier_config_api.models.config import MatchRule
+
+
+def _line_matches(config_line: str, match_rules: MatchRule) -> bool:
+    """Check whether a configuration line satisfies any of the match rules."""
+    if match_rules.equals and config_line == match_rules.equals:
+        return True
+    if match_rules.contains and match_rules.contains in config_line:
+        return True
+    if match_rules.startswith and config_line.startswith(match_rules.startswith):
+        return True
+    return bool(match_rules.regex and re.search(match_rules.regex, config_line))
 
 
 class ConfigService:
@@ -26,18 +39,14 @@ class ConfigService:
     def parse_config(platform: str, config_text: str) -> dict[str, Any]:
         """Parse configuration text into structured format."""
         platform_enum = ConfigService._get_platform(platform)
-        hconfig = get_hconfig(platform_enum, config_text)
+        hconfig = HConfig.from_text(platform_enum, config_text)
 
         # Convert HConfig tree to dictionary representation
-        def config_to_dict(config_obj: Any) -> dict[str, Any]:
-            result: dict[str, Any] = {
+        def config_to_dict(config_obj: HConfig | HConfigChild) -> dict[str, Any]:
+            return {
                 "text": str(config_obj),
-                "children": [],
+                "children": [config_to_dict(child) for child in config_obj.children],
             }
-            if hasattr(config_obj, "children"):
-                for child in config_obj.children:
-                    result["children"].append(config_to_dict(child))
-            return result
 
         return config_to_dict(hconfig)
 
@@ -47,27 +56,26 @@ class ConfigService:
     ) -> tuple[str, bool]:
         """Compare two configurations and return unified diff."""
         platform_enum = ConfigService._get_platform(platform)
-        running_hconfig = get_hconfig(platform_enum, running_config)
-        intended_hconfig = get_hconfig(platform_enum, intended_config)
+        running_hconfig = HConfig.from_text(platform_enum, running_config)
+        intended_hconfig = HConfig.from_text(platform_enum, intended_config)
 
         workflow = WorkflowRemediation(running_hconfig, intended_hconfig)
         remediation = workflow.remediation_config
         rollback = workflow.rollback_config
 
-        diff_lines = []
+        diff_lines: list[str] = []
 
         # Generate unified diff format
         if remediation:
-            diff_lines.append("--- running_config")
-            diff_lines.append("+++ intended_config")
-            for line in str(remediation).splitlines():
-                if line.strip():
-                    diff_lines.append(f"+ {line}")
+            diff_lines.extend(("--- running_config", "+++ intended_config"))
+            diff_lines.extend(
+                f"+ {line}" for line in str(remediation).splitlines() if line.strip()
+            )
 
         if rollback:
-            for line in str(rollback).splitlines():
-                if line.strip():
-                    diff_lines.append(f"- {line}")
+            diff_lines.extend(
+                f"- {line}" for line in str(rollback).splitlines() if line.strip()
+            )
 
         unified_diff = "\n".join(diff_lines) if diff_lines else "No differences found"
         has_changes = bool(diff_lines)
@@ -75,7 +83,9 @@ class ConfigService:
         return unified_diff, has_changes
 
     @staticmethod
-    def predict_config(platform: str, current_config: str, commands_to_apply: str) -> str:
+    def predict_config(
+        _platform: str, current_config: str, commands_to_apply: str
+    ) -> str:
         """Predict configuration state after applying commands."""
         # Simple merge: append new commands
         config_lines = current_config.splitlines()
@@ -100,13 +110,13 @@ class ConfigService:
 
         # Merge each subsequent config
         for config in configs[1:]:
-            running_hconfig = get_hconfig(platform_enum, merged)
-            intended_hconfig = get_hconfig(platform_enum, config)
+            running_hconfig = HConfig.from_text(platform_enum, merged)
+            intended_hconfig = HConfig.from_text(platform_enum, config)
 
             workflow = WorkflowRemediation(running_hconfig, intended_hconfig)
             remediation = workflow.remediation_config
             if remediation:
-                merged += "\n" + str(remediation)
+                merged += f"\n{remediation!s}"
 
         return merged
 
@@ -114,38 +124,23 @@ class ConfigService:
     def search_config(
         platform: str,
         config_text: str,
-        equals: str | None = None,
-        contains: str | None = None,
-        startswith: str | None = None,
-        regex_pattern: str | None = None,
+        match_rules: MatchRule,
     ) -> list[str]:
         """Search configuration for matching lines."""
         platform_enum = ConfigService._get_platform(platform)
-        hconfig = get_hconfig(platform_enum, config_text)
+        hconfig = HConfig.from_text(platform_enum, config_text)
 
-        matches = []
+        matches: list[str] = []
 
-        def search_recursive(config_obj: Any) -> None:
+        def search_recursive(config_obj: HConfig | HConfigChild) -> None:
             config_line = str(config_obj).strip()
 
-            # Check matching conditions
-            is_match = False
-            if equals and config_line == equals:
-                is_match = True
-            elif contains and contains in config_line:
-                is_match = True
-            elif startswith and config_line.startswith(startswith):
-                is_match = True
-            elif regex_pattern and re.search(regex_pattern, config_line):
-                is_match = True
-
-            if is_match:
+            if _line_matches(config_line, match_rules):
                 matches.append(config_line)
 
             # Recursively search children
-            if hasattr(config_obj, "children"):
-                for child in config_obj.children:
-                    search_recursive(child)
+            for child in config_obj.children:
+                search_recursive(child)
 
         search_recursive(hconfig)
         return matches

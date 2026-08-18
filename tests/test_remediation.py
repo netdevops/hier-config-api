@@ -4,7 +4,9 @@ from fastapi.testclient import TestClient
 
 
 def test_generate_remediation(
-    client: TestClient, sample_cisco_ios_config: str, sample_cisco_ios_intended_config: str
+    client: TestClient,
+    sample_cisco_ios_config: str,
+    sample_cisco_ios_intended_config: str,
 ) -> None:
     """Test generating remediation."""
     response = client.post(
@@ -26,7 +28,9 @@ def test_generate_remediation(
 
 
 def test_generate_remediation_with_tags(
-    client: TestClient, sample_cisco_ios_config: str, sample_cisco_ios_intended_config: str
+    client: TestClient,
+    sample_cisco_ios_config: str,
+    sample_cisco_ios_intended_config: str,
 ) -> None:
     """Test generating remediation with tag rules."""
     response = client.post(
@@ -46,7 +50,9 @@ def test_generate_remediation_with_tags(
 
 
 def test_apply_tags(
-    client: TestClient, sample_cisco_ios_config: str, sample_cisco_ios_intended_config: str
+    client: TestClient,
+    sample_cisco_ios_config: str,
+    sample_cisco_ios_intended_config: str,
 ) -> None:
     """Test applying tags to remediation."""
     # First, generate a remediation
@@ -73,7 +79,9 @@ def test_apply_tags(
 
 
 def test_filter_remediation(
-    client: TestClient, sample_cisco_ios_config: str, sample_cisco_ios_intended_config: str
+    client: TestClient,
+    sample_cisco_ios_config: str,
+    sample_cisco_ios_intended_config: str,
 ) -> None:
     """Test filtering remediation by tags."""
     # First, generate a remediation
@@ -90,7 +98,8 @@ def test_filter_remediation(
 
     # Filter remediation
     response = client.get(
-        f"/api/v1/remediation/{remediation_id}/filter", params={"include_tags": ["safe"]}
+        f"/api/v1/remediation/{remediation_id}/filter",
+        params={"include_tags": ["safe"]},
     )
     assert response.status_code == 200
     data = response.json()

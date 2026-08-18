@@ -8,6 +8,7 @@ from typing import Any
 
 import yaml
 
+from hier_config_api.models.remediation import GenerateRemediationRequest
 from hier_config_api.models.report import ChangeDetail, DeviceRemediation, ReportSummary
 from hier_config_api.services.remediation_service import RemediationService
 
@@ -35,9 +36,11 @@ class ReportService:
         for device_rem in remediations:
             # Generate remediation for this device
             remediation_result = RemediationService.generate_remediation(
-                platform=device_rem.platform,
-                running_config=device_rem.running_config,
-                intended_config=device_rem.intended_config,
+                GenerateRemediationRequest(
+                    platform=device_rem.platform,
+                    running_config=device_rem.running_config,
+                    intended_config=device_rem.intended_config,
+                )
             )
 
             remediation_config = remediation_result["remediation_config"]
@@ -123,16 +126,22 @@ class ReportService:
         if format_type == "json":
             return json.dumps(report_data, indent=2)
 
-        elif format_type == "yaml":
+        if format_type == "yaml":
             return yaml.dump(report_data, default_flow_style=False)
 
-        elif format_type == "csv":
+        if format_type == "csv":
             output = io.StringIO()
             writer = csv.writer(output)
 
             # Write header
             writer.writerow(
-                ["Device ID", "Platform", "Has Changes", "Change Count", "Remediation Summary"]
+                [
+                    "Device ID",
+                    "Platform",
+                    "Has Changes",
+                    "Change Count",
+                    "Remediation Summary",
+                ]
             )
 
             # Write device rows
@@ -144,7 +153,7 @@ class ReportService:
                         device["has_changes"],
                         device["change_count"],
                         (
-                            device["remediation"][:50] + "..."
+                            f"{device['remediation'][:50]}..."
                             if len(device["remediation"]) > 50
                             else device["remediation"]
                         ),
@@ -153,5 +162,5 @@ class ReportService:
 
             return output.getvalue()
 
-        else:
-            raise ValueError(f"Unsupported format: {format_type}")
+        message = f"Unsupported format: {format_type}"
+        raise ValueError(message)

@@ -13,31 +13,47 @@ class TagRule(BaseModel):
 class RemediationSummary(BaseModel):
     """Summary of remediation changes."""
 
-    additions: int = Field(0, description="Number of configuration additions")
-    deletions: int = Field(0, description="Number of configuration deletions")
-    modifications: int = Field(0, description="Number of configuration modifications")
+    additions: int = Field(default=0, description="Number of configuration additions")
+    deletions: int = Field(default=0, description="Number of configuration deletions")
+    modifications: int = Field(
+        default=0, description="Number of configuration modifications"
+    )
 
 
 class GenerateRemediationRequest(BaseModel):
     """Request model for generating remediation."""
 
-    platform: str = Field(..., description="Platform type (e.g., cisco_ios, juniper_junos)")
+    platform: str = Field(
+        ..., description="Platform type (e.g., cisco_ios, juniper_junos)"
+    )
     running_config: str = Field(..., description="Current running configuration")
     intended_config: str = Field(..., description="Desired configuration state")
-    tag_rules: list[TagRule] | None = Field(None, description="Optional tag rules to apply")
-    include_tags: list[str] | None = Field(None, description="Only include these tags")
-    exclude_tags: list[str] | None = Field(None, description="Exclude these tags")
+    tag_rules: list[TagRule] | None = Field(
+        default=None, description="Optional tag rules to apply"
+    )
+    include_tags: list[str] | None = Field(
+        default=None, description="Only include these tags"
+    )
+    exclude_tags: list[str] | None = Field(
+        default=None, description="Exclude these tags"
+    )
 
 
 class GenerateRemediationResponse(BaseModel):
     """Response model for generated remediation."""
 
-    remediation_id: str = Field(..., description="Unique identifier for this remediation")
+    remediation_id: str = Field(
+        ..., description="Unique identifier for this remediation"
+    )
     platform: str = Field(..., description="Platform type")
-    remediation_config: str = Field(..., description="Commands to achieve desired state")
+    remediation_config: str = Field(
+        ..., description="Commands to achieve desired state"
+    )
     rollback_config: str = Field(..., description="Commands to rollback changes")
     summary: RemediationSummary = Field(..., description="Summary of changes")
-    tags: dict[str, list[str]] = Field(default_factory=dict, description="Tags applied to commands")
+    tags: dict[str, list[str]] = Field(
+        default_factory=dict, description="Tags applied to commands"
+    )
 
 
 class ApplyTagsRequest(BaseModel):
@@ -57,8 +73,12 @@ class ApplyTagsResponse(BaseModel):
 class FilterRemediationRequest(BaseModel):
     """Request model for filtering remediation by tags."""
 
-    include_tags: list[str] | None = Field(None, description="Only include these tags")
-    exclude_tags: list[str] | None = Field(None, description="Exclude these tags")
+    include_tags: list[str] | None = Field(
+        default=None, description="Only include these tags"
+    )
+    exclude_tags: list[str] | None = Field(
+        default=None, description="Exclude these tags"
+    )
 
 
 class FilterRemediationResponse(BaseModel):

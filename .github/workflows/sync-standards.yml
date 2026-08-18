@@ -1,0 +1,39 @@
+name: hier-config-api sync standards
+
+on:
+  schedule:
+  # Weekly, Monday 06:00 UTC
+  - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+    - uses: actions/checkout@v6
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: "3.12"
+    - name: Install poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 2.3.1
+    - name: Apply canonical standards
+      run: |
+        poetry install --no-interaction
+        poetry run python scripts/sync_standards.py apply
+    - name: Open pull request if standards drifted
+      uses: peter-evans/create-pull-request@v7
+      with:
+        branch: sync-standards
+        base: develop
+        title: Sync development standards from netdevops/hier_config
+        commit-message: Sync development standards from netdevops/hier_config
+        body: >
+          Automated update of shared development-standard files from the
+          canonical repository declared in `.standards.yml`. Review CI
+          results and reconcile any incompatibilities before merging.

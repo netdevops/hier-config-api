@@ -238,34 +238,85 @@ Get the results of a completed batch job.
 
 ## Development
 
+This project follows the same development, testing, and linting standards as
+[hier_config](https://github.com/netdevops/hier_config). All checks are driven
+by `scripts/build.py`:
+
+```bash
+# Full lint + test suite (what CI runs)
+poetry run python scripts/build.py lint-and-test
+
+# Lint only (ruff format + check, mypy, pyright, pylint, yamllint, flynt — in parallel)
+poetry run python scripts/build.py lint
+
+# Lint with auto-fixes applied
+poetry run python scripts/build.py lint --fix
+
+# Tests with coverage (95% minimum enforced)
+poetry run python scripts/build.py pytest --coverage
+```
+
+### Docker Development Environment
+
+A Docker-based development environment, driven by
+[invoke](https://www.pyinvoke.org/) tasks, is available as an alternative to a
+local Poetry setup:
+
+```bash
+invoke build             # build the development image
+invoke serve             # API with hot reload at http://localhost:8000
+invoke docs              # docs with live reload at http://localhost:8001
+invoke pytest            # tests inside the container (--coverage for the gate)
+invoke lint              # linters inside the container (--fix for auto-fixes)
+invoke lint-and-test     # full suite, same as CI
+invoke cli               # shell inside the container
+invoke sync-standards    # check drift against canonical netdevops standards
+invoke destroy           # tear down containers
+```
+
+Shared development standards (lint/typing/test tooling, YAML style) are owned
+by [hier_config](https://github.com/netdevops/hier_config) and declared in
+`.standards.yml`; `invoke sync-standards --apply` pulls in the canonical
+versions, and a weekly workflow opens a PR when they change.
+
 ### Running Tests
 
 ```bash
 # Run all tests
 poetry run pytest
 
-# Run with coverage
-poetry run pytest --cov=hier_config_api --cov-report=html
-
 # Run specific test file
 poetry run pytest tests/test_configs.py -v
+
+# Run a single test
+poetry run pytest tests/test_configs.py::test_parse_config -v
 ```
 
-### Code Quality
+### Code Quality Standards
 
-```bash
-# Run ruff linter
-poetry run ruff check .
+- **ruff**: `select = ["ALL"]` with preview rules, line length 88; formatting via `ruff format`
+- **mypy**: strict mode with the pydantic plugin
+- **pyright**: `typeCheckingMode = "strict"`
+- **pylint**: extension plugins + `pylint_pydantic`, for rules not covered by ruff
+- **yamllint / flynt**: YAML style and f-string enforcement
+- **pytest**: flat function-based tests with full type annotations; 95% coverage floor
 
-# Run ruff formatter
-poetry run ruff format .
+Never loosen the lint or coverage configuration to make a change pass.
 
-# Run mypy type checker
-poetry run mypy hier_config_api
+### Releasing
 
-# Run all linters
-poetry run ruff check . && poetry run mypy hier_config_api
-```
+Releases are driven by two GitHub Actions workflows and require repository
+admin permission:
+
+1. Run the **Prepare Release** workflow (`Actions` → `Prepare Release` →
+   `Run workflow`), choosing the branch to release from in the branch
+   dropdown and the version bump type (`major`, `minor`, `patch`, or
+   `prerelease`). The workflow bumps the version in `pyproject.toml`, opens
+   a `release/vX.Y.Z` pull request against the chosen branch, and creates a
+   draft GitHub release tagged `vX.Y.Z` targeting that branch.
+2. Merge the release pull request.
+3. Publish the draft release. Publishing fires the **Release** workflow,
+   which builds the package and uploads it to PyPI automatically.
 
 ## Supported Platforms
 

@@ -4,7 +4,9 @@ from fastapi.testclient import TestClient
 
 
 def test_create_report(
-    client: TestClient, sample_cisco_ios_config: str, sample_cisco_ios_intended_config: str
+    client: TestClient,
+    sample_cisco_ios_config: str,
+    sample_cisco_ios_intended_config: str,
 ) -> None:
     """Test creating a multi-device report."""
     response = client.post(
@@ -33,7 +35,9 @@ def test_create_report(
 
 
 def test_get_report_summary(
-    client: TestClient, sample_cisco_ios_config: str, sample_cisco_ios_intended_config: str
+    client: TestClient,
+    sample_cisco_ios_config: str,
+    sample_cisco_ios_intended_config: str,
 ) -> None:
     """Test getting report summary."""
     # First, create a report
@@ -63,7 +67,9 @@ def test_get_report_summary(
 
 
 def test_get_report_changes(
-    client: TestClient, sample_cisco_ios_config: str, sample_cisco_ios_intended_config: str
+    client: TestClient,
+    sample_cisco_ios_config: str,
+    sample_cisco_ios_intended_config: str,
 ) -> None:
     """Test getting detailed change analysis."""
     # First, create a report
@@ -93,7 +99,9 @@ def test_get_report_changes(
 
 
 def test_export_report_json(
-    client: TestClient, sample_cisco_ios_config: str, sample_cisco_ios_intended_config: str
+    client: TestClient,
+    sample_cisco_ios_config: str,
+    sample_cisco_ios_intended_config: str,
 ) -> None:
     """Test exporting report as JSON."""
     # First, create a report
@@ -120,7 +128,9 @@ def test_export_report_json(
 
 
 def test_export_report_csv(
-    client: TestClient, sample_cisco_ios_config: str, sample_cisco_ios_intended_config: str
+    client: TestClient,
+    sample_cisco_ios_config: str,
+    sample_cisco_ios_intended_config: str,
 ) -> None:
     """Test exporting report as CSV."""
     # First, create a report
@@ -144,3 +154,61 @@ def test_export_report_csv(
     response = client.get(f"/api/v1/reports/{report_id}/export?format=csv")
     assert response.status_code == 200
     assert "Device ID" in response.text
+
+
+def test_export_report_yaml(
+    client: TestClient,
+    sample_cisco_ios_config: str,
+    sample_cisco_ios_intended_config: str,
+) -> None:
+    """Test exporting report as YAML."""
+    # First, create a report
+    create_response = client.post(
+        "/api/v1/reports",
+        json={
+            "remediations": [
+                {
+                    "device_id": "router1",
+                    "platform": "cisco_ios",
+                    "running_config": sample_cisco_ios_config,
+                    "intended_config": sample_cisco_ios_intended_config,
+                }
+            ]
+        },
+    )
+    assert create_response.status_code == 200
+    report_id = create_response.json()["report_id"]
+
+    # Export as YAML
+    response = client.get(f"/api/v1/reports/{report_id}/export?format=yaml")
+    assert response.status_code == 200
+    assert "total_devices" in response.text
+
+
+def test_get_report_changes_with_tag_filter(
+    client: TestClient,
+    sample_cisco_ios_config: str,
+    sample_cisco_ios_intended_config: str,
+) -> None:
+    """Test filtering report changes by tag."""
+    # First, create a report
+    create_response = client.post(
+        "/api/v1/reports",
+        json={
+            "remediations": [
+                {
+                    "device_id": "router1",
+                    "platform": "cisco_ios",
+                    "running_config": sample_cisco_ios_config,
+                    "intended_config": sample_cisco_ios_intended_config,
+                }
+            ]
+        },
+    )
+    assert create_response.status_code == 200
+    report_id = create_response.json()["report_id"]
+
+    # No changes carry tags, so filtering by a tag yields no changes
+    response = client.get(f"/api/v1/reports/{report_id}/changes?tag=missing-tag")
+    assert response.status_code == 200
+    assert response.json()["total_unique_changes"] == 0

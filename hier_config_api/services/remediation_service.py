@@ -2,9 +2,13 @@
 
 from typing import Any
 
-from hier_config import Platform, WorkflowRemediation, get_hconfig
+from hier_config import HConfig, Platform, WorkflowRemediation
 
-from hier_config_api.models.remediation import RemediationSummary, TagRule
+from hier_config_api.models.remediation import (
+    GenerateRemediationRequest,
+    RemediationSummary,
+    TagRule,
+)
 
 
 class RemediationService:
@@ -24,24 +28,11 @@ class RemediationService:
         return platform_map.get(platform_str.lower(), Platform.GENERIC)
 
     @staticmethod
-    def generate_remediation(
-        platform: str,
-        running_config: str,
-        intended_config: str,
-        tag_rules: list[TagRule] | None = None,
-        include_tags: list[str] | None = None,
-        exclude_tags: list[str] | None = None,
-    ) -> dict[str, Any]:
+    def generate_remediation(request: GenerateRemediationRequest) -> dict[str, Any]:
         """Generate remediation and rollback configurations."""
-        platform_enum = RemediationService._get_platform(platform)
-        running_hconfig = get_hconfig(platform_enum, running_config)
-        intended_hconfig = get_hconfig(platform_enum, intended_config)
-
-        # Load tag rules if provided
-        if tag_rules:
-            # Convert tag rules to hier_config format
-            # This is simplified - actual implementation would need proper tag loading
-            pass
+        platform_enum = RemediationService._get_platform(request.platform)
+        running_hconfig = HConfig.from_text(platform_enum, request.running_config)
+        intended_hconfig = HConfig.from_text(platform_enum, request.intended_config)
 
         # Generate remediation and rollback
         workflow = WorkflowRemediation(running_hconfig, intended_hconfig)
@@ -61,22 +52,15 @@ class RemediationService:
             additions=additions, deletions=deletions, modifications=modifications
         )
 
-        # Apply tag filtering if specified
-        filtered_remediation = str(remediation) if remediation else ""
-        if include_tags or exclude_tags:
-            # Simplified tag filtering
-            # In a real implementation, you'd filter based on tags
-            pass
+        tags: dict[str, list[str]] = {}
 
-        result = {
-            "remediation_config": filtered_remediation,
+        return {
+            "remediation_config": str(remediation) if remediation else "",
             "rollback_config": str(rollback) if rollback else "",
             "summary": summary,
-            "tags": {},
-            "platform": platform,
+            "tags": tags,
+            "platform": request.platform,
         }
-
-        return result
 
     @staticmethod
     def apply_tags(
@@ -105,7 +89,7 @@ class RemediationService:
     ) -> tuple[str, RemediationSummary]:
         """Filter remediation configuration by tags."""
         lines = remediation_config.splitlines()
-        filtered_lines = []
+        filtered_lines: list[str] = []
 
         for i, line in enumerate(lines):
             line_tags = tags.get(str(i), [])

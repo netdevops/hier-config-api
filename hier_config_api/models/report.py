@@ -7,7 +7,9 @@ class DeviceRemediation(BaseModel):
     """Model for a single device's remediation data."""
 
     device_id: str = Field(..., description="Unique device identifier")
-    platform: str = Field(..., description="Platform type (e.g., cisco_ios, juniper_junos)")
+    platform: str = Field(
+        ..., description="Platform type (e.g., cisco_ios, juniper_junos)"
+    )
     running_config: str = Field(..., description="Current running configuration")
     intended_config: str = Field(..., description="Desired configuration state")
 
@@ -32,7 +34,9 @@ class ReportSummary(BaseModel):
 
     total_devices: int = Field(..., description="Total number of devices")
     devices_with_changes: int = Field(..., description="Number of devices with changes")
-    total_changes: int = Field(..., description="Total number of changes across all devices")
+    total_changes: int = Field(
+        ..., description="Total number of changes across all devices"
+    )
     changes_by_tag: dict[str, int] = Field(
         default_factory=dict, description="Count of changes by tag"
     )
@@ -44,7 +48,9 @@ class ChangeDetail(BaseModel):
     change_text: str = Field(..., description="The configuration change text")
     device_count: int = Field(..., description="Number of devices with this change")
     device_ids: list[str] = Field(..., description="List of affected device IDs")
-    tags: list[str] = Field(default_factory=list, description="Tags associated with this change")
+    tags: list[str] = Field(
+        default_factory=list, description="Tags associated with this change"
+    )
 
 
 class GetReportChangesResponse(BaseModel):
@@ -58,4 +64,4 @@ class GetReportChangesResponse(BaseModel):
 class ExportFormat(BaseModel):
     """Supported export formats."""
 
-    format: str = Field("json", description="Export format (json, csv, yaml)")
+    format: str = Field(default="json", description="Export format (json, csv, yaml)")
